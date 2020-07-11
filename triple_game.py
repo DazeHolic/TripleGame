@@ -1,28 +1,32 @@
-from enum import Enum
-import random
 
+
+import math
+import gym
+from gym import spaces, logger
+from gym.utils import seeding
+import numpy as np
+import random
 
 ACT_UP = 0
 ACT_DOWN = 1
 ACT_LEFT = 2
 ACT_RIGHT = 3
 
+class TripleEnv(gym.Env):
 
-class TripleGame:
-    def __init__(self, show, rowMax, columnMax, colourMax):
-        self.colours = [[0 for i in range(rowMax)] for j in range(columnMax)]
-        self.rowMax = rowMax
-        self.columnMax = columnMax
-        self.colourMax = colourMax
-        self.show = show
+    def __init__(self):
+        self.rowMax = 7
+        self.columnMax = 7
+        self.colourMax = 3
+        self.colours = [[0 for i in range(self.rowMax)] for j in range(self.columnMax)]
+        self.reset()
+        self.score = 0
+    
 
-    def Start(self):
-        self.ColourReset()
-        self.EnsureValid()
-
-
-    def DoAction(self, row, column, act):
+    def step(self, row, column, act):
+        done = False
         if (self.CheckActionValid(row, column, act)):
+            reward = 1
             colour = self.GetColour(row, column)
             targetRow = -1
             targetColumn = -1
@@ -47,14 +51,20 @@ class TripleGame:
             self.SetColour(targetRow, targetColumn, colour)
             self.EnsureValid()
 
-            if self.show:
-                print("Action Error!")
-            return True
+            self.score += 1
+            if self.score >= 50:
+                done = True
+                self.score = 50
+        else:
+            reward = -1
+        return self.colours, reward, done, {}
 
+    def reset(self):
+        self.ColourReset()
+        self.EnsureValid()
+        return self.colours
 
-    def Show(self):
-        if not self.show:
-            return
+    def render(self):
         print("  ", end='')
         for k in range(0, self.columnMax):
             print(k, end='')
@@ -80,6 +90,8 @@ class TripleGame:
                     s = "X"
                 print(s, end='')
         print("\n")
+
+
 
     def GetColour(self, row, column):
         if row < 0 or column <0 or row >= self.rowMax or column >= self.columnMax:
@@ -235,7 +247,7 @@ class TripleGame:
             # OBOO
             row1 = row     
             column1 = column + 2
-            column1 = column + 3
+            column2 = column + 3
             if (self.GetColour(row1, column1) == colour and self.GetColour(row1, column2) == colour):
                 return True
         else:
@@ -291,7 +303,5 @@ class TripleGame:
                 self.ColourReset()
             else:
                 break
-        if self.show:
-            self.Show()
 
 
